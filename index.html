@@ -57,9 +57,10 @@
             <label for="MastCell">Number of MastCell:</label>
             <input type="number" id="MastCell" value="10">
         </div>
+        <div class="control-group">
             <label for="eosinophils">Eosinophils:</label>
             <input type="number" id="eosinophils" value="20">
-`       </div>
+        </div>
         <div class="control-group">
             <label for="complementSystems">Number of Complement Systems:</label>
             <input type="number" id="complementSystems" value="0">
@@ -129,6 +130,10 @@
     <canvas id="canvas" width="1500" height="1500"></canvas>
     <canvas id="chart" width="400" height="200"></canvas>
     <div id="stats"></div>
+    <audio id="water-ambiance" loop>
+      <source src="water ambiance.OWI.WAV" type="audio/wav">
+      Your browser does not support the audio element.
+    </audio>
     <script>
  // Add the summonPathogens function here
  function summonPathogens(type, number) {
