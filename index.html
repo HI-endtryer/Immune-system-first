@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Immune System Simulation</title>
-    <a href="https://www.youtube.com/@SparkeyGD">Go subscribe to SparkeyGD's YouTube channel!</a>
+      <a href="https://www.youtube.com/@SparkeyGD">Go subscribe to SparkeyGD's YouTube channel!</a>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         /* Add some basic styling to position the agent name div */
@@ -13,16 +13,16 @@
             left: 10px;
             background-color: #f0f0f0;
             padding: 5px;
-            border: 1px solid #ccc;
+            border: 1px solid #000000;
             display: none;
         }
         body {
-            background-color: #868686; /* Black background for the page */
+            background-color: #474444; /* Black background for the page */
             color: rgb(0, 0, 0); /* White text for better contrast */
         }
         canvas {
-            border: 1px solid rgb(255, 255, 255);
-            background-color: rgb(43, 40, 40); /* Black background for the canvas */
+            border: 1px solid rgb(0, 0, 0);
+            background-color: rgb(24, 24, 24); /* Black background for the canvas */
         }
         #controls {
             display: flex;
@@ -315,15 +315,11 @@ class Bacteria extends Pathogen {
       this.speed = 0.5; // in pixels per second (slower movement)
       this.direction = Math.random() * 2 * Math.PI; // in radians
       this.rotation = Math.random() * 2 * Math.PI; // in radians
-      this.flagellaLength = 5; // in pixels
       this.splitInterval = 1.5; // duplicate every 1 second
       this.splitHpThreshold = 150; // HP threshold for splitting
-      this.growthRate = 0.6; // HP growth rate per second
+      this.growthRate = 0.4; // HP growth rate per second
       this.color = "#0f5923"; // dark green
       this.bodyAngle = Math.random() * Math.PI * 2; // initial body angle
-      this.flagellaAngle = Math.random() * Math.PI * 2; // initial flagella angle
-      this.spiralLength = 10; // length of the spiral shape
-      this.spiralAngle = 0.1; // angle of the spiral shape
       this.lastSplitTime = 0; // timestamp of last split
     }
   
@@ -368,37 +364,27 @@ class Bacteria extends Pathogen {
     draw(ctx) {
         ctx.fillStyle = this.color;
         ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, 2 * Math.PI);
+        ctx.ellipse(this.x, this.y, this.size * 2, this.size * 0.6, 0, 0, 2 * Math.PI);
         ctx.fill();
-    
-        // draw body
+      
+        // Add a slight curvature to the pill shape
         ctx.strokeStyle = "#333";
         ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.moveTo(this.x, this.y);
-        ctx.lineTo(this.x + Math.cos(this.bodyAngle) * this.size * 1.5, this.y + Math.sin(this.bodyAngle) * this.size * 1.5);
+        ctx.moveTo(this.x - this.size * 2, this.y);
+        ctx.bezierCurveTo(
+          this.x - this.size * 2, this.y - this.size * 0.6,
+          this.x + this.size * 2, this.y - this.size * 0.6,
+          this.x + this.size * 2, this.y
+        );
         ctx.stroke();
-    
-        // draw flagella
-        ctx.strokeStyle = "#666";
-        ctx.lineWidth = 0.2;
-        ctx.beginPath();
-        ctx.moveTo(this.x, this.y);
-        ctx.lineTo(this.x + Math.cos(this.flagellaAngle) * this.flagellaLength, this.y + Math.sin(this.flagellaAngle) * this.flagellaLength);
-        ctx.stroke();
-    
-        // draw spiral shape
-        ctx.strokeStyle = "#1c7534";
-        ctx.lineWidth = 0.5;
-        ctx.beginPath();
-        ctx.moveTo(this.x, this.y);
-        for (let i = 0; i < this.spiralLength; i++) {
-          const angle = this.spiralAngle + i / this.spiralLength * 2 * Math.PI;
-          const x = this.x + Math.cos(angle) * i;
-          const y = this.y + Math.sin(angle) * i;
-          ctx.lineTo(x, y);
-        }
-        ctx.stroke();
+      
+        // Add a spinning effect
+        this.rotation += 10; // adjust the rotation speed here
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.rotation);
+        ctx.restore();
       }
     }
     class Virus extends Pathogen {
@@ -682,12 +668,48 @@ class Fungi extends Pathogen {
     }
 
     draw(ctx) {
+        // Draw the main body of the fungi
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
         ctx.fillStyle = this.color;
         ctx.fill();
         ctx.closePath();
-    }
+      
+        // Add some fuzziness to the fungi
+        ctx.fillStyle = "#333"; // Darker shade of green
+        for (let i = 0; i < 500; i++) {
+          let angle = Math.random() * 2 * Math.PI;
+          let distance = Math.random() * (this.radius + 0.2); // Add 5 to make the fuzziness extend further
+          let x = this.x + distance * Math.cos(angle);
+          let y = this.y + distance * Math.sin(angle);
+          ctx.beginPath();
+          ctx.arc(x, y, this.radius * 0.01, 0, 2 * Math.PI);
+          ctx.fill();
+          ctx.closePath();
+        }
+      
+        // Add some wispy tendrils to the fungi
+        ctx.strokeStyle = "#666"; // Darker shade of green
+        ctx.lineWidth = 0.5;
+        for (let i = 0; i < 10; i++) {
+          let angle = Math.random() * 2 * Math.PI;
+          let length = Math.random() * (this.radius * 0.5 + 5); // Add 5 to make the tendrils longer
+          let x = this.x + length * Math.cos(angle);
+          let y = this.y + length * Math.sin(angle);
+          ctx.beginPath();
+          ctx.moveTo(this.x, this.y);
+          ctx.bezierCurveTo(
+            this.x + length * 0.2 * Math.cos(angle),
+            this.y + length * 0.2 * Math.sin(angle),
+            x - length * 0.2 * Math.cos(angle),
+            y - length * 0.2 * Math.sin(angle),
+            x,
+            y
+          );
+          ctx.stroke();
+          ctx.closePath();
+        }
+      }
 }
 class Spore extends Pathogen {
     constructor(x, y) {
@@ -1343,20 +1365,7 @@ class NaturalKillerCell extends Agent {
         ctx.strokeStyle = "#8B0000"; // Maroon color
         ctx.lineWidth = 0.5;
         ctx.stroke();
-      
-        // Draw the nucleus
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, 1.5, 0, 2 * Math.PI); // Nucleus size
-        ctx.fillStyle = "#5C0000"; // Dark maroon color
-        ctx.fill();
-      
-        // Draw the cytoplasm
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, 2.5, 0, 2 * Math.PI); // Cytoplasm size
-        ctx.fillStyle = "#B22222"; // Firebrick color
-        ctx.fill();
-      
-        ctx.closePath();
+
       }
   }
 class Neutrophil extends ImmuneCell {
@@ -1836,10 +1845,10 @@ class TCell extends ImmuneCell {
       this.targetCell = null; // Target immune cell to buff
       this.armAngles = []; // Initial arm angles
       for (let i = 0; i < 12; i++) {
-        this.armAngles.push(i * Math.PI / 6); // 30 degrees = π/6 radians
+        this.armAngles.push(i * Math.PI / 3); // 30 degrees = π/6 radians
       }
       this.armSpeed = 0.01; // Speed at which arms move
-      this.armLength = 25; // Length of the arms
+      this.armLength = 15; // Length of the arms
     }
   
     step() {
@@ -1864,7 +1873,7 @@ class TCell extends ImmuneCell {
       if (this.targetCell) {
         let dx = this.targetCell.x - this.x;
         let dy = this.targetCell.y - this.y;
-        let distance = Math.sqrt(dx * dx + dy * dy);
+        let distance = Math.hypot(dx, dy);
         if (distance > 70) {
           this.x += (dx / distance) * this.moveSpeed;
           this.y += (dy / distance) * this.moveSpeed;
@@ -1882,17 +1891,20 @@ class TCell extends ImmuneCell {
     }
   
     findNewTargetCell() {
+      // Maintain a list of eligible agents
+      const eligibleAgents = agents.filter(agent => {
+        return agent instanceof ImmuneCell && !(agent instanceof TCell) && agent.state === "active" && !agent.isTargeted;
+      });
+  
       let closestCell = null;
       let closestDistance = Infinity;
   
-      // Find the closest immune cell (except T-cells)
-      for (let cell of agents) {
-        if (cell instanceof ImmuneCell && !(cell instanceof TCell) && cell.state === "active" && !cell.isTargeted) {
-          let distance = this.distanceTo(cell);
-          if (distance < closestDistance) {
-            closestDistance = distance;
-            closestCell = cell;
-          }
+      // Find the closest eligible agent
+      for (let cell of eligibleAgents) {
+        let distance = this.distanceTo(cell);
+        if (distance < closestDistance) {
+          closestDistance = distance;
+          closestCell = cell;
         }
       }
   
@@ -1903,13 +1915,16 @@ class TCell extends ImmuneCell {
     }
   
     buffCells() {
+      // Cache the agents within the aura radius
+      const agentsWithinAura = agents.filter(agent => {
+        return agent instanceof ImmuneCell && !(agent instanceof TCell) && this.distanceTo(agent) < this.auraRadius;
+      });
+  
       // Gradual buffing of immune cells within the aura radius
-      for (let cell of agents) {
-        if (cell instanceof ImmuneCell && !(cell instanceof TCell) && this.distanceTo(cell) < this.auraRadius) {
-          cell.hp += 0.1; // Gradually increase health points
-          cell.speed += 0.001; // Gradually increase speed
-          cell.isBuffed = true; // Indicate that the cell is being buffed
-        }
+      for (let cell of agentsWithinAura) {
+        cell.hp += 0.1; // Gradually increase health points
+        cell.speed += 0.001; // Gradually increase speed
+        cell.isBuffed = true; // Indicate that the cell is being buffed
       }
     }
   
@@ -1927,13 +1942,13 @@ class TCell extends ImmuneCell {
       } else {
         this.duplicationTimer--;
       }
-    }
+   }
   
     distanceTo(cell) {
       // Calculate the distance between this cell and another cell
       let dx = cell.x - this.x;
       let dy = cell.y - this.y;
-      return Math.sqrt(dx * dx + dy * dy);
+      return Math.hypot(dx, dy);
     }
   
     draw(ctx) {
@@ -1970,7 +1985,7 @@ class TCell extends ImmuneCell {
       // Draw the arms
       ctx.strokeStyle = "rgba(139, 69, 19, 1)";
       ctx.lineWidth = 2;
-      for (let i = 0; i < 12; i++) {
+      for (let i = 0; i < 6; i++) {
         ctx.beginPath();
         ctx.moveTo(this.x, this.y);
         ctx.lineTo(this.x + this.armLength * Math.cos(this.armAngles[i]), this.y + this.armLength * Math.sin(this.armAngles[i]));
@@ -1992,6 +2007,7 @@ class TCell extends ImmuneCell {
       }
     }
   }
+  
 class Eosinophil extends Agent {
     /**
      * Constructor for Eosinophil agent
@@ -2207,8 +2223,6 @@ class Antibody extends Agent {
         }
     }
 }
-      // Define MastCell class extending ImmuneCell
-// Define MastCell class extending ImmuneCell
 class MastCell extends ImmuneCell {
     constructor(x, y) {
       super("MastCell", x, y, 200);
@@ -2222,20 +2236,22 @@ class MastCell extends ImmuneCell {
     step() {
       this.move();
       this.summonComplement();
-      this.degranulate(); // New: degranulation behavior
+      this.degranulate();
     }
   
     move() {
-      // Move more randomly and faster within a larger range
-      this.x += (Math.random() * 2 - 1) * this.moveSpeed;
-      this.y += (Math.random() * 2 - 1) * this.moveSpeed;
-  
-      // Ensure mast cells stay within canvas bounds (if canvas dimensions are known)
-      if (this.x < 0) this.x = 0;
-      if (this.x > canvas.width) this.x = 0;
-      if (this.y < 0) this.y = 0;
-      if (this.y > canvas.height) this.y = canvas.height;
-    }
+        this.prevX = this.x;
+        this.prevY = this.y;
+        // Move more randomly and faster within a larger range
+        this.x += (Math.random() * 2 - 1) * this.moveSpeed;
+        this.y += (Math.random() * 2 - 1) * this.moveSpeed;
+      
+        // Ensure mast cells stay within canvas bounds (if canvas dimensions are known)
+        if (this.x < 0) this.x = 0;
+        if (this.x > canvas.width) this.x = canvas.width;
+        if (this.y < 0) this.y = 0;
+        if (this.y > canvas.height) this.y = canvas.height;
+      }
   
     summonComplement() {
       this.timeSinceLastComplement++;
@@ -2259,32 +2275,50 @@ class MastCell extends ImmuneCell {
     }
   
     draw(ctx) {
-      // Draw the cell body
-      ctx.fillStyle = "#C7B8EA"; // Light purple color for the cell body
-      ctx.beginPath();
-      ctx.arc(this.x, this.y, 20, 0, 2 * Math.PI);
-      ctx.fill();
-    
-      // Add some texture to the cell body (reduced iterations)
-      ctx.fillStyle = "#B3A2C7"; // Slightly darker light purple color for the texture
-      for (let i = 0; i < 10; i++) {
-        ctx.arc(this.x + Math.random() * 24 - 12, this.y + Math.random() * 24 - 12, 0.8, 0, 2 * Math.PI);
+        // Draw the cell body
+        ctx.fillStyle = "#C7B8EA"; // Light purple color for the cell body
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, 20, 0, 2 * Math.PI);
+        ctx.fill();
+      
+        // Add some texture to the cell body (reduced iterations)
+        ctx.fillStyle = "#B3A2C7"; // Slightly darker light purple color for the texture
+        for (let i = 0; i < 5; i++) {
+          ctx.arc(this.x + Math.random() * 24 - 12, this.y + Math.random() * 24 - 12, 0.8, 0, 2 * Math.PI);
+        }
+        ctx.fill();
+      
+        // Draw the nucleus
+        ctx.fillStyle = "#333333"; // Dark gray color for the nucleus
+        ctx.beginPath();
+        ctx.arc(this.x - 4, this.y - 4, 7, 0, 2 * Math.PI);
+        ctx.fill();
+      
+        // Draw red dots inside the cell
+        this.drawDots(ctx, "#FF0000", 10);
       }
-      ctx.fill();
-    
-      // Draw the granules (reduced iterations)
-      ctx.fillStyle = "#6c5ce7"; // Dark blue-purple color for the granules
-      for (let i = 0; i < 20; i++) {
-        ctx.arc(this.x + Math.random() * 24 - 12, this.y + Math.random() * 24 - 12, 0.4, 0, 2 * Math.PI);
+
+      drawDots(ctx, color, count) {
+        this.dotPositions = this.dotPositions || []; // Initialize dot positions array
+        ctx.fillStyle = color;
+        for (let i = 0; i < count; i++) {
+          if (!this.dotPositions[i]) {
+            // Initialize dot position if it doesn't exist
+            this.dotPositions[i] = {
+              x: this.x + Math.random() * 16 - 8,
+              y: this.y + Math.random() * 16 - 8
+            };
+          } else {
+            // Update dot position to follow the cell's movement
+            this.dotPositions[i].x += this.x - this.prevX;
+            this.dotPositions[i].y += this.y - this.prevY;
+          }
+          ctx.beginPath();
+          ctx.arc(this.dotPositions[i].x, this.dotPositions[i].y, 0.4, 0, 2 * Math.PI);
+          ctx.fill();
+        }
       }
-      ctx.fill();
-    
-      // Draw the nucleus (optional, as it's often obscured by granules)
-      ctx.fillStyle = "#333333"; // Dark gray color for the nucleus
-      ctx.ellipse(this.x - 4, this.y - 4, 2, 2, 0, 0, 2 * Math.PI);
-      ctx.fill();
     }
-  }
 // Initialize canvas and context
 let canvas = document.getElementById('canvas');
 let ctx = canvas.getContext('2d');
