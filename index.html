@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Immune System Simulation</title>
+    <a href="https://www.youtube.com/@SparkeyGD">Go subscribe to SparkeyGD's YouTube channel!</a>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         /* Add some basic styling to position the agent name div */
@@ -1228,115 +1229,136 @@ class DendriticCell extends ImmuneCell {
 }
 class NaturalKillerCell extends Agent {
     constructor(x, y) {
-        super("NaturalKillerCell", x, y);
-        this.damage = 100; // Damage dealt to cancer cells
-        this.speed = 2; // Movement speed
-        this.target = null; // Current target
-        this.visitedCells = new Set(); // Track visited cells to avoid revisiting them immediately
-        this.switchTimer = 40; // Timer for switching to the next regular cell (2 seconds in steps)
+      super("NaturalKillerCell", x, y);
+      this.damage = 100; // Damage dealt to cancer cells
+      this.speed = 2; // Movement speed
+      this.target = null; // Current target
+      this.visitedCells = new Set(); // Track visited cells to avoid revisiting them immediately
+      this.switchTimer = 40; // Timer for switching to the next regular cell (2 seconds in steps)
     }
-
+  
     step() {
-        if (this.switchTimer > 0) {
-            this.switchTimer--;
-        }
-
-        if (this.switchTimer === 0) {
-            this.findTarget();
-            this.switchTimer = 40; // Reset the switch timer
-        }
-
-        if (this.target) {
-            this.moveToTarget();
-            this.attackTarget();
-        }
-        this.draw(ctx);
+      if (this.switchTimer > 0) {
+        this.switchTimer--;
+      }
+  
+      if (this.switchTimer === 0) {
+        this.findTarget();
+        this.switchTimer = 40; // Reset the switch timer
+      }
+  
+      if (this.target) {
+        this.moveToTarget();
+        this.attackTarget();
+      }
+      this.draw(ctx);
     }
-
+  
     findTarget() {
-        let cancerCells = [];
-        let regularCells = [];
-
-        // Separate cancer cells and regular cells
-        for (let agent of agents) {
-            if (agent instanceof CancerCell) {
-                cancerCells.push(agent);
-            } else if (agent instanceof RegularCell && !this.visitedCells.has(agent)) {
-                regularCells.push(agent);
-            }
+      let cancerCells = [];
+      let regularCells = [];
+  
+      // Separate cancer cells and regular cells
+      for (let agent of agents) {
+        if (agent instanceof CancerCell) {
+          cancerCells.push(agent);
+        } else if (agent instanceof RegularCell && !this.visitedCells.has(agent)) {
+          regularCells.push(agent);
         }
-
-        // Find the closest cancer cell within a 200-unit radius
-        let closestCancerCell = null;
-        let minDistCancer = Infinity;
-        for (let cancerCell of cancerCells) {
-            let dist = distance(this, cancerCell);
-            if (dist < 300 && dist < minDistCancer) {
-                closestCancerCell = cancerCell;
-                minDistCancer = dist;
-            }
+      }
+  
+      // Find the closest cancer cell within a 200-unit radius
+      let closestCancerCell = null;
+      let minDistCancer = Infinity;
+      for (let cancerCell of cancerCells) {
+        let dist = distance(this, cancerCell);
+        if (dist < 300 && dist < minDistCancer) {
+          closestCancerCell = cancerCell;
+          minDistCancer = dist;
         }
-
-        // If a cancer cell is found within 200 units, target it
-        if (closestCancerCell) {
-            this.target = closestCancerCell;
-            return;
-        }
-
-        // Otherwise, find the second or third closest regular cell
-        regularCells.sort((a, b) => distance(this, a) - distance(this, b));
-        if (regularCells.length > 2) {
-            // Randomly choose the second or third closest regular cell
-            this.target = regularCells[Math.floor(Math.random() * 4) + 1];
-        } else if (regularCells.length > 0) {
-            // If there are not enough regular cells, choose the closest one
-            this.target = regularCells[0];
-        } else {
-            // No regular cells to target
-            this.target = null;
-        }
+      }
+  
+      // If a cancer cell is found within 200 units, target it
+      if (closestCancerCell) {
+        this.target = closestCancerCell;
+        return;
+      }
+  
+      // Otherwise, find the second or third closest regular cell
+      regularCells.sort((a, b) => distance(this, a) - distance(this, b));
+      if (regularCells.length > 2) {
+        // Randomly choose the second or third closest regular cell
+        this.target = regularCells[Math.floor(Math.random() * 4) + 1];
+      } else if (regularCells.length > 0) {
+        // If there are not enough regular cells, choose the closest one
+        this.target = regularCells[0];
+      } else {
+        // No regular cells to target
+        this.target = null;
+      }
     }
-
+  
     moveToTarget() {
-        if (this.target) {
-            let dx = this.target.x - this.x;
-            let dy = this.target.y - this.y;
-            let dist = Math.sqrt(dx * dx + dy * dy);
-
-            if (dist < this.speed) {
-                this.x = this.target.x;
-                this.y = this.target.y;
-                if (this.target instanceof RegularCell) {
-                    this.visitedCells.add(this.target);
-                }
-                this.target = null; // Reached target, set target to null to find the next target in the next step
-            } else {
-                this.x += (dx / dist) * this.speed;
-                this.y += (dy / dist) * this.speed;
-            }
+      if (this.target) {
+        let dx = this.target.x - this.x;
+        let dy = this.target.y - this.y;
+        let dist = Math.sqrt(dx * dx + dy * dy);
+  
+        if (dist < this.speed) {
+          this.x = this.target.x;
+          this.y = this.target.y;
+          if (this.target instanceof RegularCell) {
+            this.visitedCells.add(this.target);
+          }
+          this.target = null; // Reached target, set target to null to find the next target in the next step
+        } else {
+          this.x += (dx / dist) * this.speed;
+          this.y += (dy / dist) * this.speed;
         }
+      }
     }
-
+  
     attackTarget() {
-        if (this.target && distance(this, this.target) < 5) {
-            if (this.target instanceof CancerCell) {
-                this.target.hp -= this.damage;
-            }
-            if (this.target.hp <= 0) {
-                this.target.state = "inactive";
-                this.target = null;
-            }
+      if (this.target && distance(this, this.target) < 5) {
+        if (this.target instanceof CancerCell) {
+          this.target.hp -= this.damage;
         }
+        if (this.target.hp <= 0) {
+          this.target.state = "inactive";
+          this.target = null;
+        }
+      }
     }
-
+  
     draw(ctx) {
+        // Draw the cell body
         ctx.beginPath();
         ctx.arc(this.x, this.y, 3.5, 0, 2 * Math.PI); // Natural Killer Cell size is 8
-        ctx.fillStyle = "#0FD683"; // Magenta color
+        ctx.fillStyle = "#8B0000"; // Maroon color
         ctx.fill();
+      
+        // Draw the cell membrane
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, 3.2, 0, 2 * Math.PI); // Cell membrane thickness
+        ctx.strokeStyle = "#8B0000"; // Maroon color
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+      
+        // Draw the nucleus
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, 1.5, 0, 2 * Math.PI); // Nucleus size
+        ctx.fillStyle = "#5C0000"; // Dark maroon color
+        ctx.fill();
+      
+        // Draw the cytoplasm
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, 2.5, 0, 2 * Math.PI); // Cytoplasm size
+        ctx.fillStyle = "#B22222"; // Firebrick color
+        ctx.fill();
+      
         ctx.closePath();
-    }
-}
+      }
+  }
 class Neutrophil extends ImmuneCell {
     constructor(x, y) {
         super("Neutrophil", x, y, 300);
