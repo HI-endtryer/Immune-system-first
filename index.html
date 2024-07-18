@@ -3,26 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <title>Immune System Simulation</title>
-      <a href="https://www.youtube.com/@SparkeyGD">Go subscribe to SparkeyGD's YouTube channel!</a>
+    <a href="https://www.youtube.com/@SparkeyGD">Go subscribe to SparkeyGD's YouTube channel!</a>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <style>
         /* Add some basic styling to position the agent name div */
         #agentName {
             position: absolute;
             top: 10px;
             left: 10px;
-            background-color: #f0f0f0;
+            background-color: #000000;
             padding: 5px;
-            border: 1px solid #000000;
+            border: 2px solid #000000;
             display: none;
         }
         body {
-            background-color: #474444; /* Black background for the page */
-            color: rgb(0, 0, 0); /* White text for better contrast */
+            background-color: #777777; /* Black background for the page */
+            color: rgb(255, 255, 255); /* White text for better contrast */
         }
         canvas {
-            border: 1px solid rgb(0, 0, 0);
-            background-color: rgb(24, 24, 24); /* Black background for the canvas */
+            border: 1px solid rgb(255, 255, 255);
+            background-color: rgb(15, 15, 15); /* Black background for the canvas */
         }
         #controls {
             display: flex;
@@ -131,10 +132,6 @@
     <canvas id="canvas" width="1500" height="1500"></canvas>
     <canvas id="chart" width="400" height="200"></canvas>
     <div id="stats"></div>
-    <audio id="water-ambiance" loop>
-      <source src="water ambiance.OWI.WAV" type="audio/wav">
-      Your browser does not support the audio element.
-    </audio>
     <script>
  // Add the summonPathogens function here
  function summonPathogens(type, number) {
@@ -677,40 +674,19 @@ class Fungi extends Pathogen {
       
         // Add some fuzziness to the fungi
         ctx.fillStyle = "#333"; // Darker shade of green
-        for (let i = 0; i < 500; i++) {
+        for (let i = 0; i < 150; i++) {
           let angle = Math.random() * 2 * Math.PI;
-          let distance = Math.random() * (this.radius + 0.2); // Add 5 to make the fuzziness extend further
+          let distance = Math.random() * (this.radius + 1.5); // Add 5 to make the fuzziness extend further
           let x = this.x + distance * Math.cos(angle);
           let y = this.y + distance * Math.sin(angle);
           ctx.beginPath();
-          ctx.arc(x, y, this.radius * 0.01, 0, 2 * Math.PI);
+          ctx.arc(x, y, this.radius * 0.05, 0, 2 * Math.PI);
           ctx.fill();
           ctx.closePath();
         }
-      
-        // Add some wispy tendrils to the fungi
-        ctx.strokeStyle = "#666"; // Darker shade of green
-        ctx.lineWidth = 0.5;
-        for (let i = 0; i < 10; i++) {
-          let angle = Math.random() * 2 * Math.PI;
-          let length = Math.random() * (this.radius * 0.5 + 5); // Add 5 to make the tendrils longer
-          let x = this.x + length * Math.cos(angle);
-          let y = this.y + length * Math.sin(angle);
-          ctx.beginPath();
-          ctx.moveTo(this.x, this.y);
-          ctx.bezierCurveTo(
-            this.x + length * 0.2 * Math.cos(angle),
-            this.y + length * 0.2 * Math.sin(angle),
-            x - length * 0.2 * Math.cos(angle),
-            y - length * 0.2 * Math.sin(angle),
-            x,
-            y
-          );
-          ctx.stroke();
-          ctx.closePath();
         }
       }
-}
+
 class Spore extends Pathogen {
     constructor(x, y) {
         super("Spore", x, y, 2);
@@ -2116,15 +2092,7 @@ class Eosinophil extends Agent {
        ctx.fillStyle = "#C9E4CA"; // Light blue-green color for the cytoplasm
        ctx.arc(this.x, this.y, 3.5, 0, 2 * Math.PI);
        ctx.fill();
-     
-       // Add some texture to the cytoplasm
-       ctx.fillStyle = "#B2E6CE"; // Slightly darker light blue-green color for the texture
-       for (let i = 0; i < 10; i++) {
-         ctx.arc(this.x + Math.random() * 6 - 3, this.y + Math.random() * 6 - 3, 0.2, 0, 2 * Math.PI);
-       }
-       ctx.fill();
-     
-       // Draw the bilobed nucleus
+       // Draw the bilobed nucleu
        ctx.fillStyle = "#333333"; // Dark gray color for the nucleus
        ctx.beginPath();
        ctx.ellipse(this.x - 1.5, this.y - 1, 1, 1.5, 0, 0, 2 * Math.PI);
@@ -2136,13 +2104,6 @@ class Eosinophil extends Agent {
        for (let i = 0; i < 5; i++) {
          ctx.arc(this.x - 1.5 + Math.random() * 2 - 1, this.y - 1 + Math.random() * 2 - 1, 0.2, 0, 2 * Math.PI);
          ctx.arc(this.x + 1.5 + Math.random() * 2 - 1, this.y - 1 + Math.random() * 2 - 1, 0.2, 0, 2 * Math.PI);
-       }
-       ctx.fill();
-     
-       // Draw the granules
-       ctx.fillStyle = "#FF69B4"; // Bright pinkish-red color for the granules
-       for (let i = 0; i < 20; i++) {
-         ctx.arc(this.x + Math.random() * 6 - 3, this.y + Math.random() * 6 - 3, 0.1, 0, 2 * Math.PI);
        }
        ctx.fill();
      }
