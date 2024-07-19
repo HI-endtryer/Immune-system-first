@@ -222,7 +222,7 @@
                     case "TCell":
                         return 7;
                     case "Antibody":
-                        return 0.2;
+                        return 0.015;
                     case "MastCell":
                         return 15;
                     case "RegularCell":
@@ -2104,7 +2104,7 @@ class Eosinophil extends Agent {
 
 class Antibody extends Agent {
     constructor(x, y, velocityX, velocityY) {
-        super("Antibody", x, y, 1);
+        super("Antibody", x, y, 0.015);
         this.velocityX = velocityX;
         this.velocityY = velocityY;
         this.bindingAffinity = Math.random() * (0.8 - 0.2) + 0.2; // Random binding affinity between 0.2 and 0.8
@@ -2329,6 +2329,92 @@ function initializeSimulation() {
     // Start the simulation update loop
     updateSimulation();
 }
+let selectionBox = {
+    startX: 0,
+    startY: 0,
+    endX: 0,
+    endY: 0
+  };
+  
+  // Define zoomLevel and pan variables
+  let zoomLevel = 1;
+  let panX = 0;
+  let panY = 0;
+  let isPanning = false;
+  // Add event listener to canvas
+canvas.addEventListener('mousedown', (event) => {
+    // Start a new selection box
+    selectionBox.startX = event.clientX;
+    selectionBox.startY = event.clientY;
+  });
+  
+  canvas.addEventListener('mousedown', (event) => {
+    if (event.button === 0) { // Left mouse button
+      isSelecting = true;
+      selectionRectangle.x = event.clientX;
+      selectionRectangle.y = event.clientY;
+    }
+  });
+  
+  canvas.addEventListener('mouseup', () => {
+    isSelecting = false;
+  });
+  
+  canvas.addEventListener('mousemove', (event) => {
+    if (isSelecting) {
+      // Update the selection rectangle
+      selectionRectangle.width = event.clientX - selectionRectangle.x;
+      selectionRectangle.height = event.clientY - selectionRectangle.y;
+      // Draw the selection rectangle
+      drawSelectionRectangle();
+    }
+  });
+  
+  canvas.addEventListener('mouseup', () => {
+    // Get the cells within the selection box
+    const selectedCells = getCellsInSelectionBox();
+    // Perform actions on the selected cells (e.g., move, delete, or modify properties)
+    performActionOnSelectedCells(selectedCells);
+  });
+  
+  // Function to get the cells within the selection box
+  function getCellsInSelectionBox() {
+    const selectedCells = [];
+    for (const cell of cells) {
+      if (cell.x >= selectionBox.startX && cell.x <= selectionBox.endX && cell.y >= selectionBox.startY && cell.y <= selectionBox.endY) {
+        selectedCells.push(cell);
+      }
+    }
+    return selectedCells;
+  }
+  
+
+  // Add event listeners to canvas
+canvas.addEventListener('wheel', (event) => {
+    // Zoom in or out based on the wheel delta
+    if (event.deltaY > 0) {
+      zoomLevel += 0.1;
+    } else {
+      zoomLevel -= 0.1;
+    }
+    // Update the canvas transformation matrix
+    canvas.style.transform = `scale(${zoomLevel})`;
+  });
+  
+  
+  // Function to update the canvas transformation matrix
+  function updateCanvasTransform() {
+    canvas.style.transform = `translate(${panX}px, ${panY}px) scale(${zoomLevel})`;
+  }
+  // Function to perform an action on the selected cells
+  function performActionOnSelectedCells(selectedCells) {
+    // For example, move the selected cells to a new position
+    for (const cell of selectedCells) {
+      cell.x += 10;
+      cell.y += 10;
+    }
+  }
+
 
 // Function to update stats
 function updateStats() {
