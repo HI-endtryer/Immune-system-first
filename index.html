@@ -5,12 +5,8 @@
     <title>Immune System Simulation</title>
     <a href="https://www.youtube.com/@SparkeyGD">Go subscribe to SparkeyGD's YouTube channel!</a>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <style>
-      /* your styles here */
-    </style>
-</head>
-<body>
-<style>
         /* Add some basic styling to position the agent name div */
         #agentName {
             position: absolute;
@@ -149,12 +145,6 @@
         case "Virus":
           pathogen = new Virus(Math.random() * canvas.width, Math.random() * canvas.height, type);
           break;
-        case "Fungi":
-          pathogen = new Fungi(Math.random() * canvas.width, Math.random() * canvas.height);
-          break;
-        case "Cancer":
-          pathogen = new CancerCell(Math.random() * canvas.width, Math.random() * canvas.height);
-          break;
         default:
           console.error("Invalid pathogen type");
           return;
@@ -165,7 +155,6 @@
       agents.push(pathogen);
     }
   }
-
 
         function removeAgent(agent) {
             if (agent.x < 0 || agent.x > canvas.width || agent.y < 0 || agent.y > canvas.height || agent.hp <= 0) {
@@ -1660,7 +1649,7 @@ class AcidBarrier {
 class ComplementSystem extends ImmuneCell {
     constructor(x, y) {
         super("ComplementSystem", x, y, 150);
-        this.lifespan = 30000; // Lifespan of 4000 milliseconds (4 seconds)
+        this.lifespan = 10000; // Lifespan of 4000 milliseconds (4 seconds)
         this.birthTime = Date.now(); // Record the time when the complement system is created
     }
 
@@ -2193,7 +2182,7 @@ class MastCell extends ImmuneCell {
       super("MastCell", x, y, 200);
       this.complementCooldown = 400;
       this.timeSinceLastComplement = 4;
-      this.moveSpeed = 0.5; // Increase move speed
+      this.moveSpeed = 2; // Increase move speed
       this.degranulationThreshold = 0.5; // New: degranulation threshold (0-1)
       this.degranulationCount = 0; // New: degranulation count
     }
@@ -2404,6 +2393,13 @@ function updateSimulation() {
 
 // Event listener for the start button
 document.getElementById('start').addEventListener('click', initializeSimulation);
+
+const summonBacteriaButton = document.getElementById("summonBacteriaButton");
+
+summonBacteriaButton.addEventListener("click", () => {
+  summonPathogens("Bacteria", 10); // Summon 10 bacteria
+  summonPathogens("Viruse", 10);
+});
 
 function updateSimulation() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -2648,7 +2644,7 @@ setInterval(() => {
     chartData.datasets[15].data.push(agents.filter(agent => agent instanceof CancerCell).length);
     console.log('Chart data:', chartData);
     chart.update();
-}, 1500); // Update chart every 1 second
+}, 15000); // Update chart every 1 second
 </script>
 </body>
 </html>
