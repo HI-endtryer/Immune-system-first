@@ -667,13 +667,13 @@ class Fungi extends Pathogen {
       
         // Add some fuzziness to the fungi
         ctx.fillStyle = "#333"; // Darker shade of green
-        for (let i = 0; i < 150; i++) {
+        for (let i = 0; i < 75; i++) {
           let angle = Math.random() * 2 * Math.PI;
           let distance = Math.random() * (this.radius + 1.5); // Add 5 to make the fuzziness extend further
           let x = this.x + distance * Math.cos(angle);
           let y = this.y + distance * Math.sin(angle);
           ctx.beginPath();
-          ctx.arc(x, y, this.radius * 0.05, 0, 2 * Math.PI);
+          ctx.arc(x, y, this.radius * 0.1, 0, 2 * Math.PI);
           ctx.fill();
           ctx.closePath();
         }
