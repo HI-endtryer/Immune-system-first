@@ -7,39 +7,75 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
-        /* Add some basic styling to position the agent name div */
-        #agentName {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            background-color: #000000;
-            padding: 5px;
-            border: 2px solid #000000;
-            display: none;
-        }
+        /* Global Styles */
+      
         body {
-            background-color: #777777; /* Black background for the page */
-            color: rgb(255, 255, 255); /* White text for better contrast */
+          background-color: #212121; /* Dark gray background for the page */
+          color: #fff; /* White text for better contrast */
+          font-family: 'Open Sans', sans-serif; /* Modern font family */
+          margin: 0; /* Remove default margin */
+          padding: 20px; /* Add some padding to the page */
+          box-sizing: border-box; /* Make padding and border part of the width */
         }
+      
+        /* Agent Name Styles */
+      
+        #agentName {
+          position: absolute;
+          top: 20px;
+          left: 20px;
+          background-color: #333; /* Dark gray background for the agent name */
+          padding: 15px 20px; /* Add some padding to the agent name */
+          border: 1px solid #444; /* Dark gray border for the agent name */
+          border-radius: 10px; /* Rounded corners for the agent name */
+          box-shadow: 0 0 10px rgba(0, 0, 0, 0.2); /* Add a subtle shadow to the agent name */
+          display: none;
+        }
+      
+        /* Canvas Styles */
+      
         canvas {
-            border: 1px solid rgb(255, 255, 255);
-            background-color: rgb(15, 15, 15); /* Black background for the canvas */
+          border: 1px solid #ddd; /* Light gray border for the canvas */
+          background-color: #1a1a1a; /* Dark gray background for the canvas */
+          box-shadow: 0 0 10px rgba(0, 0, 0, 0.2); /* Add a subtle shadow to the canvas */
+          border-radius: 10px; /* Rounded corners for the canvas */
+          margin: 20px; /* Add some margin to the canvas */
         }
+      
+        /* Controls Styles */
+      
         #controls {
-            display: flex;
-            flex-direction: column;
-            margin-bottom: 20px;
+          display: flex;
+          flex-direction: column;
+          margin-bottom: 40px;
+          padding: 30px; /* Add some padding to the controls container */
+          background-color: #333; /* Dark gray background for the controls */
+          border: 1px solid #444; /* Dark gray border for the controls */
+          border-radius: 10px; /* Rounded corners for the controls */
+          box-shadow: 0 0 10px rgba(0, 0, 0, 0.2); /* Add a subtle shadow to the controls */
         }
+      
         .control-group {
-            margin-bottom: 20px;
+          margin-bottom: 30px;
         }
+      
         .control-group label {
-            margin-right: 20px;
+          margin-right: 20px;
+          font-weight: bold; /* Make the label text bold */
+          color: #fff; /* White text for better contrast */
         }
+      
+        /* Stats Styles */
+      
         #stats {
-            margin-top: 20px;
+          margin-top: 40px;
+          padding: 30px; /* Add some padding to the stats container */
+          background-color: #333; /* Dark gray background for the stats */
+          border: 1px solid #444; /* Dark gray border for the stats */
+          border-radius: 10px; /* Rounded corners for the stats */
+          box-shadow: 0 0 10px rgba(0, 0, 0, 0.2); /* Add a subtle shadow to the stats */
         }
-    </style>
+      </style>
 </head>
 <body>
     <div id="controls">
@@ -574,6 +610,30 @@ class Bacteria extends Pathogen {
                 ctx.closePath();
             }
         }
+        class Inflammation extends Agent {
+            constructor(x, y, intensity, duration) {
+              super("Inflammation", x, y);
+              this.intensity = intensity; // intensity of the inflammation (e.g. 0-10)
+              this.duration = duration; // duration of the inflammation (e.g. in seconds)
+              this.timer = 0; // timer to keep track of the duration
+            }
+          
+            step() {
+              this.timer++;
+              if (this.timer >= this.duration) {
+                this.state = "inactive"; // inflammation resolves after duration
+              }
+              this.draw(ctx);
+            }
+          
+            draw(ctx) {
+              ctx.beginPath();
+              ctx.arc(this.x, this.y, 5, 0, 2 * Math.PI);
+              ctx.fillStyle = "red"; // inflammation is represented by a red circle
+              ctx.fill();
+              ctx.closePath();
+            }
+          }
 class Fungi extends Pathogen {
     constructor(x, y) {
         super("Fungi", x, y, 10);
@@ -2527,7 +2587,7 @@ canvas.addEventListener('mousemove', (event) => {
     if (closestAgent && closestDistance < 20) {
         document.getElementById('agentName').innerHTML = closestAgent.type;
         document.getElementById('agentName').style.display = 'block';
-        document.getElementById('agentName').style.top = `${mouseY + 680}px`; // Adjusted to be 10px above the mouse cursor
+        document.getElementById('agentName').style.top = `${mouseY + 1000}px`; // Adjusted to be 10px above the mouse cursor
         document.getElementById('agentName').style.left = `${mouseX + 0}px`; // Adjusted to be 10px to the right of the mousecursor
     } else {
         document.getElementById('agentName').innerHTML = '';
