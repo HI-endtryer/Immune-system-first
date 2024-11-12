@@ -258,7 +258,7 @@
                     case "TCell":
                         return 7;
                     case "Antibody":
-                        return 0.015;
+                        return 0.5;
                     case "MastCell":
                         return 15;
                     case "RegularCell":
@@ -414,21 +414,24 @@ class Bacteria extends Pathogen {
       }
     }
     class Virus extends Pathogen {
-        constructor(x, y, type) {
-          super(type, x, y, 50);
-          this.infectionRate = 0.3;
-          this.targetCell = null; // To keep track of the target cell
-          this.spawnedViruses = []; // Array to keep track of spawned viruses
-          this.spawnDelay = 200; // Delay in steps (each step is approximately 16ms)
-          this.spawnDelayTimer = 500; // Timer for spawn delay
-          this.deathDelay = 1000; // Delay in steps (each step is approximately 16ms)
-          this.deathDelayTimer = 0; // Timer for death delay
-          this.speed = 1; // Speed of virus
-          this.direction = Math.random() * 2 * Math.PI; // Initial random direction
-          this.directionChangeCooldown = 250; // Steps to wait before changing direction
-          this.directionChangeTimer = this.directionChangeCooldown;
-          this.searchRadius = 50; // Radius within which to search for non-infected RegularCells
-        }
+      constructor(x, y, type, size = 50, color = "#69FFA0", speed = 1, searchRadius = 50) {
+        super(type, x, y, size);
+        this.infectionRate = 0.3;
+        this.targetCell = null; // To keep track of the target cell
+        this.spawnedViruses = []; // Array to keep track of spawned viruses
+        this.spawnDelay = 200; // Delay in steps (each step is approximately 16ms)
+        this.spawnDelayTimer = 500; // Timer for spawn delay
+        this.deathDelay = 1000; // Delay in steps (each step is approximately 16ms)
+        this.deathDelayTimer = 0; // Timer for death delay
+        this.speed = speed; // Speed of virus
+        this.color = color; // Color of virus
+        this.searchRadius = searchRadius; // Radius within which to search for non-infected RegularCells
+        this.size = size; // Size of virus
+        this.direction = Math.random() * 2 * Math.PI; // Initial random direction
+        this.directionChangeCooldown = 250; // Steps to wait before changing direction
+        this.directionChangeTimer = this.directionChangeCooldown;
+      }
+    
       
         canInfect() {
           return Math.random() < this.infectionRate;
@@ -485,15 +488,6 @@ class Bacteria extends Pathogen {
             this.directionChangeTimer = this.directionChangeCooldown; // Reset the timer
           }
         }
-      
-        draw(ctx) {
-          ctx.beginPath();
-          ctx.arc(this.x, this.y, 0.1, 0, 2 * Math.PI);
-          ctx.fillStyle = "#69FFA0";
-          ctx.fill();
-          ctx.closePath();
-        }
-      
         findTargetCell() {
           let closestCell = null;
           let minDistance = this.searchRadius;
@@ -521,7 +515,6 @@ class Bacteria extends Pathogen {
             this.y += dy / distance;
           }
         }
-      
         spawnViruses() {
           let numViruses = Math.floor(Math.random() * (7 - 3 + 1)) + 3; // Random number between 3 and 7
           for (let i = 0; i < numViruses; i++) {
@@ -529,9 +522,42 @@ class Bacteria extends Pathogen {
             let spawnDistance = Math.random() * 20 + this.targetCell.radius; // Distance from cell's center
             let spawnX = this.targetCell.x + spawnDistance * Math.cos(angle);
             let spawnY = this.targetCell.y + spawnDistance * Math.sin(angle);
-            let virus = new Virus(spawnX, spawnY, this.type);
+        
+            // Introduce random mutations to the virus's properties
+            let mutatedSpeed = this.speed + (Math.random() * 0.5 - 0.25); // Randomly change speed by up to 25%
+            let mutatedSearchRadius = this.searchRadius + (Math.random() * 10 - 5); // Randomly change search radius by up to 10 units
+            let mutatedSize = this.size + (Math.random() * 10 - 5); // Randomly change size by up to 10 units
+        
+            // Mutate color by changing the RGB values
+            let mutatedColor = this.color;
+            if (Math.random() < 0.5) { // 50% chance to mutate color
+              let r = parseInt(mutatedColor.substring(1, 3), 16);
+              let g = parseInt(mutatedColor.substring(3, 5), 16);
+              let b = parseInt(mutatedColor.substring(5, 7), 16);
+        
+              // Randomly change RGB values by up to 50
+              r = Math.max(0, Math.min(r + Math.floor(Math.random() * 50 - 25), 255));
+              g = Math.max(0, Math.min(g + Math.floor(Math.random() * 50 - 25), 255));
+              b = Math.max(0, Math.min(b + Math.floor(Math.random() * 50 - 25), 255));
+        
+              mutatedColor = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+            }
+        
+            // Ensure mutations are within reasonable bounds
+            mutatedSpeed = Math.max(0.1, Math.min(mutatedSpeed, 2)); // Speed between 0.1 and 2
+            mutatedSearchRadius = Math.max(10, Math.min(mutatedSearchRadius, 100)); // Search radius between 10 and 100
+            mutatedSize = Math.max(10, Math.min(mutatedSize, 100)); // Size between 10 and 100
+        
+            let virus = new Virus(spawnX, spawnY, this.type, mutatedSize, mutatedColor, mutatedSpeed, mutatedSearchRadius);
             agents.push(virus);
           }
+        }
+        draw(ctx) {
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.size / 100, 0, 2 * Math.PI);
+          ctx.fillStyle = this.color;
+          ctx.fill();
+          ctx.closePath();
         }
       }
         class RegularCell extends Agent {
@@ -610,30 +636,6 @@ class Bacteria extends Pathogen {
                 ctx.closePath();
             }
         }
-        class Inflammation extends Agent {
-            constructor(x, y, intensity, duration) {
-              super("Inflammation", x, y);
-              this.intensity = intensity; // intensity of the inflammation (e.g. 0-10)
-              this.duration = duration; // duration of the inflammation (e.g. in seconds)
-              this.timer = 0; // timer to keep track of the duration
-            }
-          
-            step() {
-              this.timer++;
-              if (this.timer >= this.duration) {
-                this.state = "inactive"; // inflammation resolves after duration
-              }
-              this.draw(ctx);
-            }
-          
-            draw(ctx) {
-              ctx.beginPath();
-              ctx.arc(this.x, this.y, 5, 0, 2 * Math.PI);
-              ctx.fillStyle = "red"; // inflammation is represented by a red circle
-              ctx.fill();
-              ctx.closePath();
-            }
-          }
 class Fungi extends Pathogen {
     constructor(x, y) {
         super("Fungi", x, y, 10);
@@ -1782,460 +1784,521 @@ class ComplementSystem extends ImmuneCell {
 }
 
 class BCell extends ImmuneCell {
-    constructor(x, y) {
-        super("BCell", x, y, 400);
-        this.antibodyCooldown = 20;
-        this.timeSinceLastAntibody = 0;
-        this.moveSpeed = 0.7; // Speed at which B-cells move
-        this.plasmaCell = false; // Flag to indicate if the B-cell has turned into a plasma cell
-        this.antibodyReleaseRate = 2; // Release 2 antibodies per second (even if not a plasma cell)
-        this.antibodyReleaseTimer = 0;
-        this.plasmaAntibodyReleaseRate = 10; // Release 10 antibodies per second (if plasma cell)
-    }
+  constructor(x, y) {
+      super("BCell", x, y, 400);
+      this.antibodyCooldown = 20; // Time in frames before next antibody can be released
+      this.timeSinceLastAntibody = 0;
+      this.moveSpeed = 0.7; // Speed at which B-cells move
+      this.plasmaCell = false; // Flag to indicate if the B-cell has turned into a plasma cell
+      this.antibodyReleaseRate = 2; // Release rate of antibodies per second
+      this.antibodyReleaseTimer = 0; // Timer for antibody release
+      this.antibodyThreshold = 5; // Number of antibodies needed to trigger plasma cell transformation
+      this.antibodiesReleased = 0; // Track the number of antibodies released
+  }
 
-    step() {
-        if (!this.plasmaCell) {
-            this.move(); // B-cells move all the time
-            this.timeSinceLastAntibody++;
-            if (this.timeSinceLastAntibody >= this.antibodyCooldown) {
-                this.timeSinceLastAntibody = 0;
-                let target = this.findClosestTarget();
-                if (target) {
-                    this.shootAntibody(target);
-                }
-            }
-            // Release a few antibodies even if not a plasma cell
-            this.antibodyReleaseTimer += 1;
-            if (this.antibodyReleaseTimer >= 60 / this.antibodyReleaseRate) {
-                this.antibodyReleaseTimer = 0;
-                for (let i = 0; i < this.antibodyReleaseRate; i++) {
-                    let antibody = new Antibody(this.x, this.y, Math.random() * 2 - 1, Math.random() * 2 - 1);
-                    addAgent(antibody);
-                }
-            }
-            // Check if there is a T-cell within 40 units
-            for (let cell of agents) {
-                if (cell instanceof TCell && distance(this, cell) < 80) {
-                    this.plasmaCell = true;
-                    break;
-                }
-            }
-        } else {
-            // If the B-cell has turned into a plasma cell, release more antibodies
-            this.antibodyReleaseTimer += 1;
-            if (this.antibodyReleaseTimer >= 60 / this.plasmaAntibodyReleaseRate) {
-                this.antibodyReleaseTimer = 0;
-                for (let i = 0; i < this.plasmaAntibodyReleaseRate; i++) {
-                    let antibody = new Antibody(this.x, this.y, Math.random() * 2 - 1, Math.random() * 2 - 1);
-                    addAgent(antibody);
-                }
-            }
-        }
-    }
+  step() {
+      this.move(); // B-cells move continuously
 
-    move() {
-        let target = this.findClosestTarget();
-        if (target) {
-            let dx = target.x - this.x;
-            let dy = target.y - this.y;
-            let distance = Math.sqrt(dx * dx + dy * dy);
-            if (distance < 70) {
-                let speed = this.moveSpeed * (1 - distance / 70); // Adjust speed based on distance
-                this.x += (dx / distance) * speed + Math.random() * 0.1 - 0.05; // Add some randomness
-                this.y += (dy / distance) * speed + Math.random() * 0.1 - 0.05;
-            }
-        } else {
-            // Random walk if no target is nearby
-            this.x += Math.random() * 0.5 - 0.25;
-            this.y += Math.random() * 0.5 - 0.25;
-        }
-    }
+      // Check if the B-cell should release an antibody
+      this.antibodyReleaseTimer++;
+      if (this.antibodyReleaseTimer >= 60 / this.antibodyReleaseRate) {
+          this.antibodyReleaseTimer = 0;
+          let target = this.findClosestTarget();
+          if (target) {
+              this.shootAntibody(target);
+              this.antibodiesReleased++;
+          }
+      }
 
-    shootAntibody(target) {
-        let dx = target.x - this.x;
-        let dy = target.y - this.y;
-        let distance = Math.sqrt(dx * dx + dy * dy);
-        let velocity = distance * 2; // adjust velocity based on distance
-        let angle = Math.atan2(dy, dx);
-        let velocityX = velocity * Math.cos(angle);
-        let velocityY = velocity * Math.sin(angle);
-        let antibody = new Antibody(this.x, this.y, velocityX, velocityY);
-        addAgent(antibody);
+      // Check for plasma cell transformation
+      if (this.antibodiesReleased >= this.antibodyThreshold) {
+          this.transformToPlasmaCell();
+      }
+
+      // Check for nearby T-cells to boost antibody production
+      for (let cell of agents) {
+          if (cell instanceof TCell && distance(this, cell) < 80) {
+              this.antibodyReleaseRate = 10; // Increase release rate when near T-cells
+          }
+      }
+  }
+
+  move() {
+      let target = this.findClosestTarget();
+      if (target) {
+          let dx = target.x - this.x;
+          let dy = target.y - this.y;
+          let distance = Math.sqrt(dx * dx + dy * dy);
+          if (distance < 70) {
+              let speed = this.moveSpeed * (1 - distance / 70); // Adjust speed based on distance
+              this.x += (dx / distance) * speed + (Math.random() * 0.1 - 0.05); // Add some randomness
+              this.y += (dy / distance) * speed + (Math.random() * 0.1 - 0.05);
+          }
+      } else {
+          // Random walk if no target is nearby
+          this.x += Math.random() * 0.5 - 0.25;
+          this.y += Math.random() * 0.5 - 0.25;
+      }
+  }
+
+  shootAntibody(target) {
+      let dx = target.x - this.x;
+      let dy = target.y - this.y;
+      let distance = Math.sqrt(dx * dx + dy * dy);
+      let velocity = Math.min(distance * 0.2, 1.8); // Limit max velocity
+      let angle = Math.atan2(dy, dx);
+      let velocityX = velocity * Math.cos(angle);
+      let velocityY = velocity * Math.sin(angle);
+      let antibody = new Antibody(this.x, this.y, velocityX, velocityY);
+      addAgent(antibody);
+  }
+
+  transformToPlasmaCell() {
+      this.plasmaCell = true;
+      this.antibodyReleaseRate = 10; // Increase release rate significantly for plasma cells
+      this.antibodiesReleased = 0; // Reset the count of antibodies released
+  }
+
+  findClosestTarget() {
+      // Implement logic to find the closest target (pathogen or T-cell)
+      let closestTarget = null;
+      let closestDistance = Infinity;
+      for (let agent of agents) {
+          if (agent instanceof Pathogen || agent instanceof TCell) {
+              let dist = distance(this, agent);
+              if (dist < closestDistance) {
+                  closestDistance = dist;
+                  closestTarget = agent;
+              }
+          }
+      }
+      return closestTarget;
     }
 }
 class TCell extends ImmuneCell {
-    constructor(x, y) {
-      super("TCell", x, y, 300);
-      this.auraRadius = 80;
-      this.moveSpeed = 1; // Speed at which T-cells move
-      this.isActive = false; // Initially inactive
-      this.duplicationCooldown = 1000; // Duplication cooldown period
-      this.duplicationTimer = this.duplicationCooldown; // Timer for duplication
-      this.targetCell = null; // Target immune cell to buff
-      this.armAngles = []; // Initial arm angles
-      for (let i = 0; i < 12; i++) {
-        this.armAngles.push(i * Math.PI / 3); // 30 degrees = π/6 radians
-      }
-      this.armSpeed = 0.01; // Speed at which arms move
-      this.armLength = 15; // Length of the arms
+  constructor(x, y) {
+    super("TCell", x, y, 300);
+    this.auraRadius = 80;
+    this.moveSpeed = 1; // Speed at which T-cells move
+    this.isActive = false; // Initially inactive
+    this.duplicationCooldown = 1000; // Duplication cooldown period
+    this.duplicationTimer = this.duplicationCooldown; // Timer for duplication
+    this.targetCell = null; // Target immune cell to buff
+    this.armAngles = []; // Initial arm angles
+    for (let i = 0; i < 12; i++) {
+      this.armAngles.push(i * Math.PI / 3); // 30 degrees = π/6 radians
     }
-  
-    step() {
-      if (this.isActive) {
-        this.moveTowardsCells(); // T-cells move towards other immune cells
-        this.buffCells(); // Buff immune cells within the aura radius
-        this.duplicate(); // Attempt to duplicate
-      }
-      this.draw(ctx);
+    this.armSpeed = 0.01; // Speed at which arms move
+    this.armLength = 15; // Length of the arms
+  }
+
+  step() {
+    if (this.isActive) {
+      this.moveTowardsCells(); // T-cells move towards other immune cells
+      this.buffCells(); // Buff immune cells within the aura radius
+      this.duplicate(); // Attempt to duplicate
     }
-  
-    activate() {
-      this.isActive = true;
+    this.draw(ctx);
+  }
+
+  activate() {
+    this.isActive = true;
+  }
+
+  moveTowardsCells() {
+    if (!this.targetCell || this.targetCell.state !== "active" || this.targetCell instanceof TCell) {
+      this.findNewTargetCell();
     }
-  
-    moveTowardsCells() {
-      if (!this.targetCell || this.targetCell.state !== "active" || this.targetCell instanceof TCell) {
-        this.findNewTargetCell();
+
+    // Move towards the target immune cell
+    if (this.targetCell) {
+      let dx = this.targetCell.x - this.x;
+      let dy = this.targetCell.y - this.y;
+      let distance = Math.hypot(dx, dy);
+      if (distance > 70) {
+        this.x += (dx / distance) * this.moveSpeed;
+        this.y += (dy / distance) * this.moveSpeed;
       }
-  
-      // Move towards the target immune cell
-      if (this.targetCell) {
-        let dx = this.targetCell.x - this.x;
-        let dy = this.targetCell.y - this.y;
-        let distance = Math.hypot(dx, dy);
-        if (distance > 70) {
-          this.x += (dx / distance) * this.moveSpeed;
-          this.y += (dy / distance) * this.moveSpeed;
-        }
-      } else {
-        this.moveRandomly(); // Move randomly if no target is found
+    } else {
+      this.moveRandomly(); // Move randomly if no target is found
+    }
+  }
+
+  moveRandomly() {
+    let angle = Math.random() * 2 * Math.PI;
+    let distance = Math.random() * 5;
+    this.x += distance * Math.cos(angle);
+    this.y += distance * Math.sin(angle);
+  }
+
+  findNewTargetCell() {
+    // Maintain a list of eligible agents
+    const eligibleAgents = agents.filter(agent => {
+      return agent instanceof ImmuneCell && !(agent instanceof TCell) && agent.state === "active" && !agent.isTargeted;
+    });
+
+    let closestCell = null;
+    let closestDistance = Infinity;
+
+    // Find the closest eligible agent
+    for (let cell of eligibleAgents) {
+      let distance = this.distanceTo(cell);
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closestCell = cell;
       }
     }
-  
-    moveRandomly() {
+
+    if (closestCell) {
+      closestCell.isTargeted = true;
+      this.targetCell = closestCell;
+    }
+  }
+
+  buffCells() {
+    // Cache the agents within the aura radius
+    const agentsWithinAura = agents.filter(agent => {
+      return agent instanceof ImmuneCell && !(agent instanceof TCell) && this.distanceTo(agent) < this.auraRadius;
+    });
+
+    // Gradual buffing of immune cells within the aura radius
+    for (let cell of agentsWithinAura) {
+      cell.hp += 0.1; // Gradually increase health points
+      cell.speed += 0.001; // Gradually increase speed
+      cell.isBuffed = true; // Indicate that the cell is being buffed
+    }
+  }
+
+  duplicate() {
+    if (this.duplicationTimer <= 0) {
       let angle = Math.random() * 2 * Math.PI;
-      let distance = Math.random() * 5;
-      this.x += distance * Math.cos(angle);
-      this.y += distance * Math.sin(angle);
+      let spawnDistance = 2; // Distance from the cell's center for the new cell
+      let spawnX = this.x + spawnDistance * Math.cos(angle);
+      let spawnY = this.y + spawnDistance * Math.sin(angle);
+      let newTCell = new TCell(spawnX, spawnY);
+      newTCell.activate(); // Ensure the new T-cell starts as active
+
+      agents.push(newTCell);
+      this.duplicationTimer = this.duplicationCooldown; // Reset the duplication timer
+    } else {
+      this.duplicationTimer--;
     }
-  
-    findNewTargetCell() {
-      // Maintain a list of eligible agents
-      const eligibleAgents = agents.filter(agent => {
-        return agent instanceof ImmuneCell && !(agent instanceof TCell) && agent.state === "active" && !agent.isTargeted;
-      });
-  
-      let closestCell = null;
-      let closestDistance = Infinity;
-  
-      // Find the closest eligible agent
-      for (let cell of eligibleAgents) {
-        let distance = this.distanceTo(cell);
-        if (distance < closestDistance) {
-          closestDistance = distance;
-          closestCell = cell;
-        }
-      }
-  
-      if (closestCell) {
-        closestCell.isTargeted = true;
-        this.targetCell = closestCell;
-      }
-    }
-  
-    buffCells() {
-      // Cache the agents within the aura radius
-      const agentsWithinAura = agents.filter(agent => {
-        return agent instanceof ImmuneCell && !(agent instanceof TCell) && this.distanceTo(agent) < this.auraRadius;
-      });
-  
-      // Gradual buffing of immune cells within the aura radius
-      for (let cell of agentsWithinAura) {
-        cell.hp += 0.1; // Gradually increase health points
-        cell.speed += 0.001; // Gradually increase speed
-        cell.isBuffed = true; // Indicate that the cell is being buffed
-      }
-    }
-  
-    duplicate() {
-      if (this.duplicationTimer <= 0) {
-        let angle = Math.random() * 2 * Math.PI;
-        let spawnDistance = 2; // Distance from the cell's center for the new cell
-        let spawnX = this.x + spawnDistance * Math.cos(angle);
-        let spawnY = this.y + spawnDistance * Math.sin(angle);
-        let newTCell = new TCell(spawnX, spawnY);
-        newTCell.activate(); // Ensure the new T-cell starts as active
-  
-        agents.push(newTCell);
-        this.duplicationTimer = this.duplicationCooldown; // Reset the duplication timer
-      } else {
-        this.duplicationTimer--;
-      }
-   }
-  
-    distanceTo(cell) {
-      // Calculate the distance between this cell and another cell
-      let dx = cell.x - this.x;
-      let dy = cell.y - this.y;
-      return Math.hypot(dx, dy);
-    }
-  
-    draw(ctx) {
-      // Draw the aura around the TCell if active
-      if (this.isActive) {
-        ctx.beginPath();
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.5)"; // White color for the aura
-        ctx.arc(this.x, this.y, this.auraRadius, 0, 2 * Math.PI);
-        ctx.stroke();
-  
-        // Draw a green glow around the immune cells that are being buffed
-        for (let cell of agents) {
-          if (cell instanceof ImmuneCell &&!(cell instanceof TCell) && this.distanceTo(cell) < this.auraRadius && cell.isBuffed) {
-            ctx.beginPath();
-            ctx.arc(cell.x, cell.y, 10, 0, 2 * Math.PI);
-            ctx.fillStyle = "rgba(0, 128, 0, 0.5)";
-            ctx.fill();
-          }
-        }
-      }
-  
-      // Draw the TCell body
+ }
+
+  distanceTo(cell) {
+    // Calculate the distance between this cell and another cell
+    let dx = cell.x - this.x;
+    let dy = cell.y - this.y;
+    return Math.hypot(dx, dy);
+  }
+
+  draw(ctx) {
+    // Draw the aura around the TCell if active
+    if (this.isActive) {
       ctx.beginPath();
-      ctx.arc(this.x, this.y, 10, 0, 2 * Math.PI);
-      ctx.fillStyle = "rgba(255, 235, 205, 1)"; // Beige color for the TCell body
-      ctx.fill();
-  
-      // Draw the nucleus
-      ctx.beginPath();
-      ctx.arc(this.x, this.y, 4, 0, 2 * Math.PI);
-      ctx.fillStyle = "rgba(128, 0, 0, 1)"; // Red color for the nucleus
-      ctx.fill();
-  
-      // Draw the arms
-      ctx.strokeStyle = "rgba(139, 69, 19, 1)";
-      ctx.lineWidth = 2;
-      for (let i = 0; i < 6; i++) {
-        ctx.beginPath();
-        ctx.moveTo(this.x, this.y);
-        ctx.lineTo(this.x + this.armLength * Math.cos(this.armAngles[i]), this.y + this.armLength * Math.sin(this.armAngles[i]));
-        ctx.stroke();
-  
-        // Draw the arm tips
-        ctx.fillStyle = "rgba(255, 255, 0, 1)";
-        ctx.beginPath();
-        ctx.arc(this.x + this.armLength * Math.cos(this.armAngles[i]), this.y + this.armLength * Math.sin(this.armAngles[i]), 1, 0, 2 * Math.PI);
-        ctx.fill();
-      }
-  
-      // Update the arm angles
-      for (let i = 0; i < 12; i++) {
-        this.armAngles[i] += this.armSpeed;
-        if (this.armAngles[i] > 2 * Math.PI) {
-          this.armAngles[i] -= 2 * Math.PI;
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.5)"; // White color for the aura
+      ctx.arc(this.x, this.y, this.auraRadius, 0, 2 * Math.PI);
+      ctx.stroke();
+
+      // Draw a green glow around the immune cells that are being buffed
+      for (let cell of agents) {
+        if (cell instanceof ImmuneCell &&!(cell instanceof TCell) && this.distanceTo(cell) < this.auraRadius && cell.isBuffed) {
+          ctx.beginPath();
+          ctx.arc(cell.x, cell.y, 10, 0, 2 * Math.PI);
+          ctx.fillStyle = "rgba(0, 128, 0, 0.5)";
+          ctx.fill();
         }
+      }
+    }
+
+    // Draw the TCell body
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, 10, 0, 2 * Math.PI);
+    ctx.fillStyle = "rgba(255, 235, 205, 1)"; // Beige color for the TCell body
+    ctx.fill();
+
+    // Draw the nucleus
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, 4, 0, 2 * Math.PI);
+    ctx.fillStyle = "rgba(128, 0, 0, 1)"; // Red color for the nucleus
+    ctx.fill();
+
+    // Draw the arms
+    ctx.strokeStyle = "rgba(139, 69, 19, 1)";
+    ctx.lineWidth = 2;
+    for (let i = 0; i < 6; i++) {
+      ctx.beginPath();
+      ctx.moveTo(this.x, this.y);
+      ctx.lineTo(this.x + this.armLength * Math.cos(this.armAngles[i]), this.y + this.armLength * Math.sin(this.armAngles[i]));
+      ctx.stroke();
+
+      // Draw the arm tips
+      ctx.fillStyle = "rgba(255, 255, 0, 1)";
+      ctx.beginPath();
+      ctx.arc(this.x + this.armLength * Math.cos(this.armAngles[i]), this.y + this.armLength * Math.sin(this.armAngles[i]), 1, 0, 2 * Math.PI);
+      ctx.fill();
+    }
+
+    // Update the arm angles
+    for (let i = 0; i < 12; i++) {
+      this.armAngles[i] += this.armSpeed;
+      if (this.armAngles[i] > 2 * Math.PI) {
+        this.armAngles[i] -= 2 * Math.PI;
       }
     }
   }
-  
+}
+
 class Eosinophil extends Agent {
-    /**
-     * Constructor for Eosinophil agent
-     * @param {number} x - Initial x-coordinate
-     * @param {number} y - Initial y-coordinate
-     * @param {number} speed - Movement speed (pixels per frame)
-     * @param {number} damageToFungi - Damage dealt to fungi
-     * @param {number} damageToOtherPathogens - Damage dealt to other pathogens
-     */
-    constructor(x, y, speed = 1.5, damageToFungi = 50, damageToOtherPathogens = 20) {
-      super("Eosinophil", x, y);
-      this.speed = speed;
-      this.damageToFungi = damageToFungi;
-      this.damageToOtherPathogens = damageToOtherPathogens;
-      this.target = null; // Current target
-      this.range = 5; // Attack range
-      this.cooldown = 10; // Attack cooldown (frames)
-      this.cooldownTimer = 0; // Current cooldown timer
+  /**
+   * Constructor for Eosinophil agent
+   * @param {number} x - Initial x-coordinate
+   * @param {number} y - Initial y-coordinate
+   * @param {number} speed - Movement speed (pixels per frame)
+   * @param {number} damageToFungi - Damage dealt to fungi
+   * @param {number} damageToOtherPathogens - Damage dealt to other pathogens
+   */
+  constructor(x, y, speed = 1.5, damageToFungi = 50, damageToOtherPathogens = 20) {
+    super("Eosinophil", x, y);
+    this.speed = speed;
+    this.damageToFungi = damageToFungi;
+    this.damageToOtherPathogens = damageToOtherPathogens;
+    this.target = null; // Current target
+    this.range = 5; // Attack range
+    this.cooldown = 10; // Attack cooldown (frames)
+    this.cooldownTimer = 0; // Current cooldown timer
+  }
+
+  /**
+   * Step function for Eosinophil agent
+   */
+  step() {
+    this.findTarget();
+    if (this.target) {
+      this.moveToTarget();
+      this.attackTarget();
     }
-  
-    /**
-     * Step function for Eosinophil agent
-     */
-    step() {
-      this.findTarget();
-      if (this.target) {
-        this.moveToTarget();
-        this.attackTarget();
-      }
-      this.draw(ctx);
-    }
-  
-    /**
-     * Find the closest target (fungi or spore) or other pathogen
-     */
-    findTarget() {
-      let closestFungiOrSpore = null;
-      let minDistFungiOrSpore = 500;
-      let closestOtherPathogen = null;
-      let minDistOtherPathogen = 200;
-  
-      for (let agent of agents) {
-        let dist = distance(this, agent);
-        if ((agent instanceof Fungi || agent instanceof Spore) && dist < minDistFungiOrSpore) {
-          closestFungiOrSpore = agent;
-          minDistFungiOrSpore = dist;
-        } else if (agent instanceof Pathogen && dist < minDistOtherPathogen) {
-          closestOtherPathogen = agent;
-          minDistOtherPathogen = dist;
-        }
-      }
-  
-      if (closestFungiOrSpore) {
-        this.target = closestFungiOrSpore;
-      } else {
-        this.target = closestOtherPathogen;
+    this.draw(ctx);
+  }
+
+  /**
+   * Find the closest target (fungi or spore) or other pathogen
+   */
+  findTarget() {
+    let closestFungiOrSpore = null;
+    let minDistFungiOrSpore = 500;
+    let closestOtherPathogen = null;
+    let minDistOtherPathogen = 200;
+
+    for (let agent of agents) {
+      let dist = distance(this, agent);
+      if ((agent instanceof Fungi || agent instanceof Spore) && dist < minDistFungiOrSpore) {
+        closestFungiOrSpore = agent;
+        minDistFungiOrSpore = dist;
+      } else if (agent instanceof Pathogen && dist < minDistOtherPathogen) {
+        closestOtherPathogen = agent;
+        minDistOtherPathogen = dist;
       }
     }
-  
-    /**
-     * Move towards the target
-     */
-    moveToTarget() {
-      if (this.target) {
-        let dx = this.target.x - this.x;
-        let dy = this.target.y - this.y;
-        let dist = Math.sqrt(dx * dx + dy * dy);
-  
-        if (dist > this.range) {
-          this.x += (dx / dist) * this.speed;
-          this.y += (dy / dist) * this.speed;
-        }
+
+    if (closestFungiOrSpore) {
+      this.target = closestFungiOrSpore;
+    } else {
+      this.target = closestOtherPathogen;
+    }
+  }
+
+  /**
+   * Move towards the target
+   */
+  moveToTarget() {
+    if (this.target) {
+      let dx = this.target.x - this.x;
+      let dy = this.target.y - this.y;
+      let dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist > this.range) {
+        this.x += (dx / dist) * this.speed;
+        this.y += (dy / dist) * this.speed;
       }
     }
-  
-    /**
-     * Attack the target
-     */
-    attackTarget() {
-      if (this.target && distance(this, this.target) < this.range) {
-        if (this.cooldownTimer <= 0) {
-          if (this.target instanceof Fungi) {
-            this.target.hp -= this.damageToFungi;
-          } else {
-            this.target.hp -= this.damageToOtherPathogens;
-          }
-          this.cooldownTimer = this.cooldown;
+  }
+
+  /**
+   * Attack the target
+   */
+  attackTarget() {
+    if (this.target && distance(this, this.target) < this.range) {
+      if (this.cooldownTimer <= 0) {
+        if (this.target instanceof Fungi) {
+          this.target.hp -= this.damageToFungi;
         } else {
-          this.cooldownTimer--;
+          this.target.hp -= this.damageToOtherPathogens;
         }
-  
-        if (this.target.hp <= 0) {
-          this.target.state = "inactive";
-          this.target = null;
-        }
+        this.cooldownTimer = this.cooldown;
+      } else {
+        this.cooldownTimer--;
+      }
+
+      if (this.target.hp <= 0) {
+        this.target.state = "inactive";
+        this.target = null;
       }
     }
-  
-    /**
-     * Draw the Eosinophil agent
-     * @param {CanvasRenderingContext2D} ctx - Canvas context
-     */
-     draw(ctx) {
-       // Draw the cytoplasm
-       ctx.beginPath();
-       ctx.fillStyle = "#C9E4CA"; // Light blue-green color for the cytoplasm
-       ctx.arc(this.x, this.y, 3.5, 0, 2 * Math.PI);
-       ctx.fill();
-       // Draw the bilobed nucleu
-       ctx.fillStyle = "#333333"; // Dark gray color for the nucleus
-       ctx.beginPath();
-       ctx.ellipse(this.x - 1.5, this.y - 1, 1, 1.5, 0, 0, 2 * Math.PI);
-       ctx.ellipse(this.x + 1.5, this.y - 1, 1, 1.5, 0, 0, 2 * Math.PI);
-       ctx.fill();
-     
-       // Add some chromatin structure to the nucleus
-       ctx.fillStyle = "#444444"; // Darker gray color for the chromatin
-       for (let i = 0; i < 5; i++) {
-         ctx.arc(this.x - 1.5 + Math.random() * 2 - 1, this.y - 1 + Math.random() * 2 - 1, 0.2, 0, 2 * Math.PI);
-         ctx.arc(this.x + 1.5 + Math.random() * 2 - 1, this.y - 1 + Math.random() * 2 - 1, 0.2, 0, 2 * Math.PI);
-       }
-       ctx.fill();
+  }
+
+  /**
+   * Draw the Eosinophil agent
+   * @param {CanvasRenderingContext2D} ctx - Canvas context
+   */
+   draw(ctx) {
+     // Draw the cytoplasm
+     ctx.beginPath();
+     ctx.fillStyle = "#C9E4CA"; // Light blue-green color for the cytoplasm
+     ctx.arc(this.x, this.y, 3.5, 0, 2 * Math.PI);
+     ctx.fill();
+     // Draw the bilobed nucleu
+     ctx.fillStyle = "#333333"; // Dark gray color for the nucleus
+     ctx.beginPath();
+     ctx.ellipse(this.x - 1.5, this.y - 1, 1, 1.5, 0, 0, 2 * Math.PI);
+     ctx.ellipse(this.x + 1.5, this.y - 1, 1, 1.5, 0, 0, 2 * Math.PI);
+     ctx.fill();
+   
+     // Add some chromatin structure to the nucleus
+     ctx.fillStyle = "#444444"; // Darker gray color for the chromatin
+     for (let i = 0; i < 5; i++) {
+       ctx.arc(this.x - 1.5 + Math.random() * 2 - 1, this.y - 1 + Math.random() * 2 - 1, 0.2, 0, 2 * Math.PI);
+       ctx.arc(this.x + 1.5 + Math.random() * 2 - 1, this.y - 1 + Math.random() * 2 - 1, 0.2, 0, 2 * Math.PI);
      }
+     ctx.fill();
+   }
+    }
+
+    class Antibody extends Agent {
+      constructor(x, y, velocityX, velocityY, type = "IgG") {
+          super("Antibody", x, y, 0.015);
+          this.velocityX = velocityX;
+          this.velocityY = velocityY;
+          this.bindingAffinity = Math.random() * (0.8 - 0.2) + 0.2; // Random binding affinity between 0.2 and 0.8
+          this.bindingRadius = Math.random() * (10 - 3) + 3; // Random binding radius between 3 and 10
+          this.bindingEnergy = 0.5; // Binding energy (higher values increase binding probability)
+          this.dissociationRate = 0.1; // Dissociation rate (higher values increase detachment probability)
+          this.boundTo = null; // Reference to the virus the antibody is currently bound to
+          this.lifetime = 10 * 60; // Lifetime in frames (10 seconds at 60 FPS)
+          this.timeBound = 0; // Time spent bound to a pathogen
+          this.type = type; // Type of antibody (e.g., IgG, IgM)
+          this.memoryCell = false; // Flag to indicate if the antibody is a memory cell
+          this.color = this.getColorByType(); // Color based on antibody type
+          this.size = 0.5; // Size of the antibody
+          this.successfulBindings = 0; // Track successful bindings for potential type change
       }
-
-class Antibody extends Agent {
-    constructor(x, y, velocityX, velocityY) {
-        super("Antibody", x, y, 0.015);
-        this.velocityX = velocityX;
-        this.velocityY = velocityY;
-        this.bindingAffinity = Math.random() * (0.8 - 0.2) + 0.2; // Random binding affinity between 0.2 and 0.8
-        this.bindingRadius = Math.random() * (10 - 3) + 3; // Random binding radius between 3 and 10
-        this.bindingEnergy = 0.5; // Binding energy (higher values increase binding probability)
-        this.dissociationRate = 0.1; // Dissociation rate (higher values increase detachment probability)
-        this.boundTo = null; // Reference to the virus the antibody is currently bound to
-        this.lifetime = 10 * 60; // Lifetime in frames (10 seconds at 60 FPS)
-    }
-
-    step() {
-        let closestVirus = null;
-        let closestDistance = Infinity;
-
-        // Find the closest virus within 30 units
-        for (let pathogen of agents) {
-            if (pathogen instanceof Virus && distance(this, pathogen) < 30) {
-                let dist = distance(this, pathogen);
-                if (dist < closestDistance) {
-                    closestDistance = dist;
-                    closestVirus = pathogen;
+  
+      getColorByType() {
+          switch (this.type) {
+            case "IgG": return "rgba(128, 0, 128, 0.8)"; // Purple color for IgG
+              case "IgM": return "rgba(255, 0, 0, 0.8)"; // Red color for IgM
+              default: return "rgba(128, 128, 128, 0.5)"; // Gray for unknown types
+          }
+      }
+  
+      step() {
+          let closestVirus = null;
+          let closestDistance = Infinity;
+  
+          // Find the closest virus within 30 units
+          for (let pathogen of agents) {
+              if (pathogen instanceof Virus && distance(this, pathogen) < 30) {
+                  let dist = distance(this, pathogen);
+                  if (dist < closestDistance) {
+                      closestDistance = dist;
+                      closestVirus = pathogen;
+                  }
+              }
+          }
+  
+          // Move towards the closest virus with chemotaxis
+          if (closestVirus) {
+              let dx = closestVirus.x - this.x;
+              let dy = closestVirus.y - this.y;
+              let dist = Math.sqrt(dx * dx + dy * dy);
+              let bias = 0.5; // Random walk bias towards the closest virus
+              this.velocityX = (dx / dist) * bias + Math.random() * 0.1 - 0.05;
+              this.velocityY = (dy / dist) * bias + Math.random() * 0.1 - 0.05;
+          } else {
+              // Random walk if no virus is nearby
+              this.velocityX += Math.random() * 0.1 - 0.05;
+              this.velocityY += Math.random() * 0.1 - 0.05;
+          }
+  
+          // Update position
+          this.x += this.velocityX;
+          this.y += this.velocityY;
+  
+          // Check for collision with pathogens
+          for (let pathogen of agents) {
+              if (pathogen instanceof Pathogen && distance(this, pathogen) < this.bindingRadius) {
+                  // Calculate the binding probability based on the binding affinity, energy, and distance
+                  let bindingProbability = this.bindingAffinity * (1 - distance(this, pathogen) / this.bindingRadius) * this.bindingEnergy;
+                  if (Math.random() < bindingProbability) {
+                      this.boundTo = pathogen;
+                      pathogen.hp -= 50; // Damage to the pathogen
+                      this.timeBound = 0; // Reset time bound
+                      this.successfulBindings++; // Increment successful bindings
+                      if (pathogen.hp <= 0) {
+                          pathogen.state = "inactive"; // Mark pathogen as inactive
+                      }
+                  } else if (this.boundTo === pathogen) {
+                      // If already bound, increment the time bound
+                      this.timeBound++;
+                        // Dissociation probability based on time bound
+                  if (Math.random() < this.dissociationRate * (this.timeBound / 60)) {
+                    this.boundTo = null; // Release the binding
+                    this.timeBound = 0; // Reset time bound
                 }
             }
         }
+    }
 
-        // Move towards the closest virus with a random walk bias
-        if (closestVirus) {
-            let dx = closestVirus.x - this.x;
-            let dy = closestVirus.y - this.y;
-            let dist = Math.sqrt(dx * dx + dy * dy);
-            let bias = 0.5; // Random walk bias towards the closest virus
-            this.velocityX = (dx / dist) * bias + Math.random() * 0.1 - 0.05;
-            this.velocityY = (dy / dist) * bias + Math.random() * 0.1 - 0.05;
-        }
-
-        // Update position
-        this.x += this.velocityX;
-        this.y += this.velocityY;
-
-        // Check for collision with pathogens
-        for (let pathogen of agents) {
-            if (pathogen instanceof Pathogen && distance(this, pathogen) < this.bindingRadius) {
-                // Calculate the binding probability based on the binding affinity, energy, and distance
-                let bindingProbability = this.bindingAffinity * (1 - distance(this, pathogen) / this.bindingRadius) * this.bindingEnergy;
-                if (Math.random() < bindingProbability) {
-                    this.boundTo = pathogen;
-                    pathogen.hp -= 50;
-                    if (pathogen.hp <= 0) {
-                        pathogen.state = "inactive";
-                    }
-                } else if (this.boundTo === pathogen) {
-                    // Dissociation probability
-                    if (Math.random() < this.dissociationRate) {
-                        this.boundTo = null;
-                    }
-                }
-            }
-        }
-
-        // Decrement lifetime
-        this.lifetime--;
-
-        // Remove antibody when lifetime reaches 0
-        if (this.lifetime <= 0) {
-            const index = agents.indexOf(this);
-            this.state = "inactive";
-            if (index!== -1) {
-                agents.splice(index, 1);
-            }
+    // Check for potential transformation from IgG to IgM
+    if (this.type === "IgG" && this.successfulBindings > 5) {
+        if (Math.random() < 0.1) { // 10% chance to transform after 5 successful bindings
+            this.type = "IgM"; // Change type to IgM
+            this.color = this.getColorByType(); // Update color based on new type
+            this.bindingAffinity *= 0.8; // Adjust binding affinity for IgM
+            this.bindingRadius *= 1.2; // Increase binding radius for IgM
+            this.successfulBindings = 0; // Reset successful bindings count
         }
     }
+
+    // If the antibody is a memory cell, it can have a faster response
+    if (this.memoryCell) {
+        this.bindingAffinity += 0.01; // Gradually increase binding affinity over time
+        if (this.bindingAffinity > 0.8) {
+            this.bindingAffinity = 0.8; // Cap the affinity
+        }
+    }
+
+    // Decrement lifetime
+    this.lifetime--;
+
+    // Remove antibody when lifetime reaches 0
+    if (this.lifetime <= 0) {
+        const index = agents.indexOf(this);
+        this.state = "inactive"; // Mark antibody as inactive
+        if (index !== -1) {
+            agents.splice(index, 1); // Remove antibody from agents array
+        }
+    }
+}
+
+// Method to visualize the antibody (for debugging or display purposes)
+draw(ctx) {
+    ctx.fillStyle = this.color;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); // Draw a circle representing the antibody
+    ctx.fill();
+    ctx.closePath();
+}
 }
 class MastCell extends ImmuneCell {
     constructor(x, y) {
@@ -2449,18 +2512,7 @@ canvas.addEventListener('mousedown', (event) => {
   }
   
 
-  // Add event listeners to canvas
-canvas.addEventListener('wheel', (event) => {
-    // Zoom in or out based on the wheel delta
-    if (event.deltaY > 0) {
-      zoomLevel += 0.1;
-    } else {
-      zoomLevel -= 0.1;
-    }
-    // Update the canvas transformation matrix
-    canvas.style.transform = `scale(${zoomLevel})`;
-  });
-  
+ 
   
   // Function to update the canvas transformation matrix
   function updateCanvasTransform() {
